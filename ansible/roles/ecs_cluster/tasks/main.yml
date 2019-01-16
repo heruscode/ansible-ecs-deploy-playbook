@@ -1,0 +1,102 @@
+# Cluster creation
+- ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: present
+  register: create_cluster
+
+# Create AmazonEC2ContainerServiceforEC2Role IAM Role
+- name: Create AmazonEC2ContainerServiceforEC2Role IAM Role
+  iam_role:
+    name: "{{ aws_iam_role_name }}"
+    assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+    managed_policy:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+    state: present
+
+# ELB Target Group Creation
+- name: Create target group
+  elb_target_group:
+    name: "{{ imagename }}"
+    protocol: http
+    port: 80
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    state: present
+    health_check_path: /
+    successful_response_codes: "200"
+  register: create_elb_target_group
+
+# ELB Creation
+- name: Create elb
+  elb_application_lb:
+    name: "{{ imagename }}"
+    security_groups:
+      - "{{imagename}}_elb_security_group"
+    subnets:
+      - "{{ create_subnet1.subnet.id }}"
+      - "{{ create_subnet2.subnet.id }}"
+    listeners:
+      - Protocol: HTTP
+        Port: 80
+        DefaultActions:
+          - Type: forward
+            TargetGroupName: "{{ imagename }}"
+    state: present
+  register: create_elb
+
+# Launch EC2 Instance
+- name: Launch EC2 Instance
+  ec2:
+    region: "{{ aws_region }}"
+    key_name: "{{ aws_keypair }}"
+    image: "{{ aws_ami_image }}"
+    instance_type: "{{ aws_instance_type }}"
+    group: "{{ create_security_group.group_name }}"
+    vpc_subnet_id: "{{ create_subnet1.subnet.id }}"
+    instance_profile_name: "{{aws_iam_role_name}}"
+    wait: yes
+    state: present
+    count: 1
+    assign_public_ip: yes
+    user_data: |
+                #!/bin/bash
+                echo ECS_CLUSTER={{create_cluster.cluster.clusterName}} >> /etc/ecs/ecs.config
+    
+# Waiting EC2 join
+- name: Wait for ec2 insante register into ecs cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: has_instances
+    delay: 10
+    repeat: 20
+
+# Task definition creation
+- name: Create task definition
+  ecs_taskdefinition:
+    containers:
+    - name: "{{ imagename }}"
+      cpu: 10
+      essential: true
+      image: "{{ ec_repo.repository.repositoryUri }}:{{ imageversion }}"
+      memory: 300
+      portMappings:
+      - containerPort: 80
+        hostPort: 0
+    family: "{{ imagename }}_task"
+    state: present
+
+# Service Creation
+- name: Create ecs service
+  ecs_service:
+    name: "{{ imagename }}_service"
+    state: present
+    cluster: "{{ new_cluster }}"
+    task_definition: "{{ imagename }}_task"
+    load_balancers:
+      - targetGroupArn: "{{ create_elb_target_group.target_group_arn }}"
+        containerName: "{{ imagename }}"
+        containerPort: 80
+    desired_count: 1
+
+# Show url to user
+- debug:
+    msg: "The deploy is over. You can access through the url : http://{{ create_elb.dns_name }}"

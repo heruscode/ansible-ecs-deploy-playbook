@@ -14,3 +14,8 @@
   hosts: localhost
   roles:
    - { role: vpc_create }
+
+- name: create ecs cluster
+  hosts: localhost
+  roles:
+   - { role: ecs_cluster }
