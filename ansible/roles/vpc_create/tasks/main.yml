@@ -1,0 +1,84 @@
+- name: Create VPC
+  ec2_vpc_net:
+    name: "{{imagename}}_vpc"
+    cidr_block: 10.0.0.0/16
+    region: "{{ aws_region }}"
+    tenancy: default
+  register: create_vpc
+
+- name: Create subnet 1 in the VPC
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    cidr: 10.0.1.0/24
+    resource_tags:
+      Name: ECS Subnet1
+    az: "{{ aws_region }}a"
+  register: create_subnet1
+
+- name: Create subnet 2 in the VPC
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    cidr: 10.0.2.0/24
+    resource_tags:
+      Name: ECS Subnet1
+    az: "{{ aws_region }}b"
+  register: create_subnet2
+
+- name: Create security group for the ELB
+  ec2_group:
+    name: "{{imagename}}_elb_security_group"
+    description: security group for http access
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: tcp
+        ports:
+        - 80
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow all on port 80
+  register: create_elb_security_group
+
+
+- name: Create security group for the EC2 network
+  ec2_group:
+    name: "{{imagename}}_security_group"
+    description: security group for http access
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    rules:
+      - proto: all
+        group_id: "{{ create_elb_security_group.group_id }}"
+        rule_desc: allow all traffic from elb security group
+
+  register: create_security_group
+
+- name: Create VPC IGW
+  ec2_vpc_igw:
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    state: present
+    region: "{{ aws_region }}"
+  register: create_igw
+
+- name: Create routing table 1
+  ec2_vpc_route_table:
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    subnets:
+      - "{{ create_subnet1.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ create_igw.gateway_id }}"
+  register: public_route_table
+
+- name: Create routing table 2
+  ec2_vpc_route_table:
+    vpc_id: "{{ create_vpc.vpc.id }}"
+    region: "{{ aws_region }}"
+    subnets:
+      - "{{ create_subnet2.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ create_igw.gateway_id }}"
+  register: public_route_table

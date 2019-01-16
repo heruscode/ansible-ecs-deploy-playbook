@@ -9,3 +9,8 @@
   hosts: localhost
   roles:
    - { role: ecr_push }
+
+- name: create vpc
+  hosts: localhost
+  roles:
+   - { role: vpc_create }
