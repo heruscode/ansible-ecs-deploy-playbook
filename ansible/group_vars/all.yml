@@ -1,0 +1,21 @@
+# Run ansible locally
+ansible_connection: local
+
+# Your aws keypair name 
+aws_keypair: marcioawsnew
+
+# Region to create the vpc and subnets
+aws_region: us-west-2
+
+# AMI image for the EC2 intances
+aws_ami_image: ami-01b70aea4161476b7
+
+# EC2 instance type
+aws_instance_type: t2.micro
+
+# IAM Role for AmazonEC2ContainerServiceforEC2Role
+aws_iam_role_name: EC2_to_ECS
+
+# Docker image
+imagename: "simplepythonapp"
+imageversion: "latest"

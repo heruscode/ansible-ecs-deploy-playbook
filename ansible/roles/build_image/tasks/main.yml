@@ -1,0 +1,11 @@
+# Install Python dependencies
+- name : install docker python library
+  pip :
+    name : docker 
+    state : present
+
+# Build image
+- name: docker build image
+  docker_image:
+    name: "{{ imagename }}"
+    path: ../Docker/

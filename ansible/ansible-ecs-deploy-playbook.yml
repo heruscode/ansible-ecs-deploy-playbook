@@ -1,0 +1,6 @@
+# Deploy docker image into AWS ECS
+
+- name: build docker image
+  hosts: localhost
+  roles:
+  - { role: build_image }
