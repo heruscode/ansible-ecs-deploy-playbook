@@ -4,3 +4,8 @@
   hosts: localhost
   roles:
   - { role: build_image }
+
+- name: create ecs_ecr and push image
+  hosts: localhost
+  roles:
+   - { role: ecr_push }

@@ -1,0 +1,26 @@
+
+# Install Python dependencies
+- name : install boto, boto3 and docker python library
+  pip :
+    name : ['boto', 'boto3', 'docker']
+    state : present
+ 
+# Login into ecr
+- name: get aws login
+  shell: "eval $(aws ecr get-login --region us-west-2 --no-include-email | sed 's|https://||')"
+  args:
+    executable: /bin/bash
+
+# Create ecr repo
+- name: create ecr_repo
+  ecs_ecr:
+    name: "{{ imagename }}"
+  register: ec_repo
+
+# Push image into repo
+- name: push image to ecr
+  docker_image:
+    name: "{{ imagename }}"
+    repository: "{{ec_repo.repository.repositoryUri}}"
+    tag: "{{ imageversion }}"
+    push: yes
