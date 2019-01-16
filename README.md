@@ -2,7 +2,7 @@
   
 Use this playbook to deploy a app into Amazon ECS, we use a simple Python app as our default scenario.  
   
-This playbook will build the app's image with docker, create and send the image into a ECR repository. Create a VPC and everything that is necessary in it(subnets, security groups...). Create a ELB. Create a EC2 instance. Create a ECS cluster with the service that runs the app's image we criated. Your app will be running in seconds.  
+This playbook will build the app's image with docker, create and send the image into a ECR repository. Create a VPC and everything that is necessary in it(subnets, security groups...). Create a ELB. Create a EC2 instance. Create a ECS cluster with the service that runs the app's image we created. Your app will be running in seconds.  
   
 Make sure you have pip, Docker and Awscli already installed on the computer that will execute this playbook.
   
