@@ -7,7 +7,7 @@
  
 # Login into ecr
 - name: get aws login
-  shell: "eval $(aws ecr get-login --region us-west-2 --no-include-email | sed 's|https://||')"
+  shell: "eval $(aws ecr get-login --region {{ aws_region }} --no-include-email | sed 's|https://||')"
   args:
     executable: /bin/bash
 
