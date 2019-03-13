@@ -3,19 +3,19 @@
 - name: build docker image
   hosts: localhost
   roles:
-  - { role: build_image }
+   - build_image
 
 - name: create ecs_ecr and push image
   hosts: localhost
   roles:
-   - { role: ecr_push }
+   - ecr_push 
 
 - name: create vpc
   hosts: localhost
   roles:
-   - { role: vpc_create }
+   - vpc_create
 
 - name: create ecs cluster
   hosts: localhost
   roles:
-   - { role: ecs_cluster }
+   - ecs_cluster
